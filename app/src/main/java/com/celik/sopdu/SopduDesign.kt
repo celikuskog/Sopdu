@@ -72,7 +72,7 @@ internal fun BrandHomeScreen(onBack: () -> Unit, onAbout: () -> Unit) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text("About", color = TEXT, fontWeight = FontWeight.Black)
-                    Text("mission, rights, and current build notes", color = MUTED, style = MaterialTheme.typography.bodySmall)
+                    Text("mission, license, and current build notes", color = MUTED, style = MaterialTheme.typography.bodySmall)
                 }
                 Text(">", color = MUTED, fontWeight = FontWeight.Bold)
             }

@@ -108,7 +108,6 @@ For meaningful communication testing, use two real Android phones:
 - Optional voice message support
 - Public release packaging
 
-## Rights
+## License
 
-All rights reserved. Copyright 2026 Sopdu.
-
+Sopdu is released under the MIT License. See [LICENSE](LICENSE).

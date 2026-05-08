@@ -45,7 +45,7 @@ internal fun AboutScreen(onBack: () -> Unit) {
                 Box(Modifier.width(42.dp).height(1.dp).background(BORDER, RoundedCornerShape(1.dp)))
                 Text("Sopdu is being prepared for public testing. Features may change as connection reliability, distress behavior, and privacy controls are tested further.", color = MUTED, style = MaterialTheme.typography.bodySmall)
                 Spacer(Modifier.height(18.dp))
-                Text("All rights reserved. Copyright 2026 Sopdu.", color = COPPER, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
+                Text("Released under the MIT License.", color = COPPER, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
             }
         }
     }
