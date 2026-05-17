@@ -1,5 +1,6 @@
 package com.celik.sopdu
 
+import android.content.SharedPreferences
 import com.celik.sopdu.data.MessageEntity
 import com.celik.sopdu.data.PeerEntity
 import com.celik.sopdu.data.SopduDao
@@ -21,4 +22,10 @@ internal suspend fun seedDebugChatsIfNeeded(dao: SopduDao, existingPeers: List<P
             dao.insertMessage(MessageEntity(UUID.randomUUID().toString(), id, true, "COPY. STAY CALM.", now - (idx + 1) * 58_000L, "SENT"))
         }
     }
+}
+
+internal suspend fun addDebugTestPeers(dao: SopduDao, prefs: SharedPreferences) {
+    seedDebugPendingPeer(prefs)
+    seedDebugHiddenPeers(prefs)
+    seedDebugChatsIfNeeded(dao, dao.getAllPeers())
 }

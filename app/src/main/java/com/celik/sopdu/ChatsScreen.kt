@@ -8,6 +8,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.BluetoothDisabled
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -26,14 +27,36 @@ import androidx.compose.ui.unit.dp
 import com.celik.sopdu.data.SopduDao
 
 @Composable
-internal fun ChatsScreen(chats: List<Peer>, pendingPeers: Map<String, String>, hiddenCount: Int, dao: SopduDao, batteryForPeer: (String) -> Int?, additionalNameForPeer: (String) -> String, onLogoClick: () -> Unit, onAcceptPending: (String, String) -> Unit, onRejectPending: (String) -> Unit, onOpenHiddenChats: () -> Unit, onOpenChat: (Peer) -> Unit) {
+internal fun ChatsScreen(chats: List<Peer>, pendingPeers: Map<String, String>, hiddenCount: Int, dao: SopduDao, batteryForPeer: (String) -> Int?, additionalNameForPeer: (String) -> String, bluetoothOn: Boolean, onOpenBluetoothSettings: () -> Unit, onLogoClick: () -> Unit, onAcceptPending: (String, String) -> Unit, onRejectPending: (String) -> Unit, onOpenHiddenChats: () -> Unit, onOpenChat: (Peer) -> Unit) {
     Column(Modifier.fillMaxSize().padding(horizontal = 16.dp, vertical = 18.dp)) {
         BrandedScreenTitle("Sopdu", "offline communication utility", onLogoClick)
-        Spacer(Modifier.height(18.dp))
+        Spacer(Modifier.height(14.dp))
+        if (!bluetoothOn) {
+            BluetoothOffBanner(onOpenBluetoothSettings)
+            Spacer(Modifier.height(12.dp))
+        }
         LazyColumn(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(0.dp)) {
             items(pendingPeers.entries.toList()) { entry -> PendingChatRow(entry.key, entry.value, onAccept = { onAcceptPending(entry.key, entry.value) }, onReject = { onRejectPending(entry.key) }) }
             items(chats) { p -> ChatRowTile(p, dao, batteryForPeer(p.id), additionalNameForPeer(p.id), onClick = { onOpenChat(p) }) }
             item { HiddenChatsRow(hiddenCount, onOpenHiddenChats) }
+        }
+    }
+}
+
+@Composable
+internal fun BluetoothOffBanner(onOpenBluetoothSettings: () -> Unit) {
+    FieldPanel(Modifier.fillMaxWidth()) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+            Box(Modifier.size(42.dp).background(CYAN.copy(alpha = 0.12f), CircleShape), contentAlignment = Alignment.Center) {
+                Icon(Icons.Filled.BluetoothDisabled, contentDescription = null, tint = CYAN, modifier = Modifier.size(21.dp))
+            }
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text("Bluetooth is off", color = TEXT, fontWeight = FontWeight.Black)
+                Text("Turn it on before radar scans or nearby chats.", color = MUTED, style = MaterialTheme.typography.bodySmall)
+            }
+            OutlinedButton(onClick = onOpenBluetoothSettings, shape = RoundedCornerShape(8.dp), contentPadding = PaddingValues(horizontal = 10.dp, vertical = 8.dp)) {
+                Text("Settings", color = CYAN)
+            }
         }
     }
 }

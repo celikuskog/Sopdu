@@ -62,7 +62,6 @@ internal fun removePendingPeer(prefs: SharedPreferences, peerId: String): Map<St
 }
 
 internal fun seedDebugPendingPeer(prefs: SharedPreferences): Map<String, String> {
-    if (prefs.getBoolean("debug_pending_seeded", false)) return loadPendingPeers(prefs)
     prefs.edit()
         .putString("pending_peer_DEBUG_REQUEST", "K7M2")
         .putBoolean("debug_pending_seeded", true)
@@ -86,7 +85,6 @@ internal fun removeRejectedPeer(prefs: SharedPreferences, peerId: String): Map<S
 }
 
 internal fun seedDebugHiddenPeers(prefs: SharedPreferences): Pair<Map<String, String>, Set<String>> {
-    if (prefs.getBoolean("debug_hidden_seeded", false)) return loadRejectedPeers(prefs) to loadBlockedPeers(prefs)
     val blocked = loadBlockedPeers(prefs).plus("DEBUG_BLOCKED")
     prefs.edit()
         .putString("rejected_peer_DEBUG_REJECTED", "R8Q4")

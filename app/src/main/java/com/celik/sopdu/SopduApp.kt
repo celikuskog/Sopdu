@@ -60,15 +60,6 @@ fun SopduApp(nearbyPeers: List<Peer>, incomingNearbyMessages: List<IncomingNearb
     val db = remember { SopduDb.get(context) }
     val dao = remember { db.dao() }
     LaunchedEffect(Unit) { onRequestInit() }
-    LaunchedEffect(Unit) {
-        if (BuildConfig.DEBUG) {
-            pendingPeers = seedDebugPendingPeer(prefs)
-            val seededHidden = seedDebugHiddenPeers(prefs)
-            rejectedPeers = seededHidden.first
-            blockedPeers = seededHidden.second
-            blockedPeerNames = loadBlockedPeerNames(prefs)
-        }
-    }
     val peerEntities by dao.observePeers().collectAsState(initial = emptyList())
     val handledIncoming = remember { mutableStateListOf<String>() }
     LaunchedEffect(incomingNearbyMessages.size) {
@@ -85,9 +76,6 @@ fun SopduApp(nearbyPeers: List<Peer>, incomingNearbyMessages: List<IncomingNearb
                 }
             }
         }
-    }
-    LaunchedEffect(peerEntities) {
-        if (BuildConfig.DEBUG) seedDebugChatsIfNeeded(dao, peerEntities)
     }
     val chats = peerEntities.filterNot { blockedPeers.contains(it.id) }.map { Peer(it.id, it.name.uppercase(), it.lastSeenAt ?: 0L) }
     var tab by remember { mutableStateOf(Tab.CHATS) }
@@ -121,11 +109,11 @@ fun SopduApp(nearbyPeers: List<Peer>, incomingNearbyMessages: List<IncomingNearb
     fun exportChats() { scope.launch { val json = buildChatsExportJson(identity, dao.getAllPeers(), dao.getAllMessages(), localNicknames); pendingExportJson = json; val stamp = SimpleDateFormat("yyyyMMdd-HHmm", Locale.US).format(Date()); exportLauncher.launch("Sopdu-export-$stamp.json") } }
     fun clearAllMessages() { scope.launch { dao.deleteAllMessages(); Toast.makeText(context, "Messages cleared", Toast.LENGTH_SHORT).show() } }
     fun deleteChat(peerId: String) { scope.launch { dao.deleteMessagesForPeer(peerId); dao.deletePeer(peerId); localNicknames = saveLocalNickname(prefs, peerId, ""); pendingPeers = removePendingPeer(prefs, peerId); rejectedPeers = removeRejectedPeer(prefs, peerId); blockedPeers = removeBlockedPeer(prefs, peerId); blockedPeerNames = loadBlockedPeerNames(prefs); if (openChat?.id == peerId) openChat = null } }
+    fun addTestPeers() { scope.launch { addDebugTestPeers(dao, prefs); pendingPeers = loadPendingPeers(prefs); rejectedPeers = loadRejectedPeers(prefs); blockedPeers = loadBlockedPeers(prefs); blockedPeerNames = loadBlockedPeerNames(prefs); Toast.makeText(context, "Test peers added", Toast.LENGTH_SHORT).show() } }
     LaunchedEffect(tab) { if (tab != Tab.NEARBY) { stopScanNow(); clearScanResults() }; if (tab != Tab.CHATS) toolsOpen = false }
     val btShown = if (!isScanning || hideNonSopdu) emptyList() else bleScanner.otherDevices.toList()
     val radarSopduPeers = when {
         !isScanning -> emptyList()
-        BuildConfig.DEBUG && nearbyPeers.isEmpty() -> listOf(Peer("DEBUG_NEARBY_SOPDU", "SOPDU TEST"))
         else -> nearbyPeers
     }
 
@@ -136,9 +124,9 @@ fun SopduApp(nearbyPeers: List<Peer>, incomingNearbyMessages: List<IncomingNearb
                 showBrandPage -> BrandHomeScreen(onBack = { showBrandPage = false }, onAbout = { showBrandAbout = true })
                 showHiddenChats -> HiddenChatsScreen(rejectedPeers, blockedPeerNames, onBack = { showHiddenChats = false }, onAcceptRejected = ::acceptRejected, onRemoveRejected = ::removeRejected, onUnblockPeer = ::unblockPeer)
                 openChat != null -> { val peer = openChat!!; val peerId = peer.id; val messageEntities by dao.observeMessages(peerId).collectAsState(initial = emptyList()); val msgs = messageEntities.map(::messageEntityToChatMsg); ChatScreen(peer, peerEntities.find { it.id == peerId }?.name?.uppercase() ?: peer.name, msgs, onBack = { openChat = null }, onSend = { sendMessage(peer, it) }, onSaveLocalName = { localNicknames = saveLocalNickname(prefs, peer.id, it) }, onDeleteChat = { deleteChat(peer.id) }, onBlockPeer = { blockPeer(peer.id) }, additionalName = localNicknames[peerId].orEmpty(), batteryPercent = batteryMap[peerId], lastSeenLabel = formatLastSeen(peer.lastSeenAt), distressStatus = if (distressActive) "ACTIVE" else "NORMAL", connectionStatus = connectionStatusByPeer[peerId] ?: PeerConnectionStatus.UNKNOWN) }
-                tab == Tab.CHATS -> { ChatsScreen(chats, pendingPeers.filterKeys { !blockedPeers.contains(it) && !rejectedPeers.containsKey(it) }, rejectedPeers.size + blockedPeerNames.size, dao, { batteryMap[it] }, { localNicknames[it].orEmpty() }, onLogoClick = { showBrandPage = true; toolsOpen = false }, onAcceptPending = ::acceptPending, onRejectPending = ::rejectPending, onOpenHiddenChats = { showHiddenChats = true; toolsOpen = false }) { openChat = it }; TopRightToolsPopout(toolsOpen, { toolsOpen = !toolsOpen }, btOn, tetheringOn, { openBluetoothSettings(context) }, { openTetheringSettings(context) }, { openDialer(context) }, distressActive) { if (distressActive) distressActive = false else showDistressConfirm = true } }
+                tab == Tab.CHATS -> { ChatsScreen(chats, pendingPeers.filterKeys { !blockedPeers.contains(it) && !rejectedPeers.containsKey(it) }, rejectedPeers.size + blockedPeerNames.size, dao, { batteryMap[it] }, { localNicknames[it].orEmpty() }, btOn, { openBluetoothSettings(context) }, onLogoClick = { showBrandPage = true; toolsOpen = false }, onAcceptPending = ::acceptPending, onRejectPending = ::rejectPending, onOpenHiddenChats = { showHiddenChats = true; toolsOpen = false }) { openChat = it }; TopRightToolsPopout(toolsOpen, { toolsOpen = !toolsOpen }, btOn, tetheringOn, { openBluetoothSettings(context) }, { openTetheringSettings(context) }, { openDialer(context) }, distressActive) { if (distressActive) distressActive = false else showDistressConfirm = true } }
                 tab == Tab.NEARBY -> NearbyRadarScreen(radarSopduPeers, btShown, hideNonSopdu, { hideNonSopdu = it }, isScanning, scanLeft, scanSeconds, { beginScanWindow() }, { stopScanNow() }, pinned, { hit -> pinned = if (pinned?.idKey == hit.idKey) null else hit }, ::openDiscoveredSopduPeer)
-                tab == Tab.SETTINGS -> SettingsScreen(identity, ::exportChats, ::clearAllMessages)
+                tab == Tab.SETTINGS -> SettingsScreen(identity, ::exportChats, ::clearAllMessages, ::addTestPeers)
             }
         }
     }

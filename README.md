@@ -54,7 +54,7 @@ Move only when it is safe, and keep watching the area around you. Do not enter u
 
 ## Debug/Test Data
 
-Debug builds include seeded test peers and chat requests so the UI can be reviewed without two real phones. These are guarded behind `BuildConfig.DEBUG` and are not intended as real contacts.
+Debug builds include a developer-only button in Settings for adding sample peers and chat requests so the UI can be reviewed without two real phones. Test peers are not added automatically.
 
 Before publishing a production release, debug/test peers should be removed from screenshots and release builds.
 

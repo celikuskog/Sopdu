@@ -15,7 +15,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
 @Composable
-internal fun SettingsScreen(identity: LocalIdentity, onExportChats: () -> Unit, onClearAllMessages: () -> Unit) {
+internal fun SettingsScreen(identity: LocalIdentity, onExportChats: () -> Unit, onClearAllMessages: () -> Unit, onAddTestPeers: () -> Unit) {
     val clipboard = LocalClipboardManager.current
     val context = LocalContext.current
     var notifSound by remember { mutableStateOf(true) }
@@ -29,6 +29,7 @@ internal fun SettingsScreen(identity: LocalIdentity, onExportChats: () -> Unit, 
         item { AlertsSettingsCard(notifSound, { notifSound = it }, notifVibrate, { notifVibrate = it }) }
         item { ExportSettingsCard { showExportWarning = true } }
         item { MessageHistorySettingsCard { showClearMessagesWarning = true } }
+        if (BuildConfig.DEBUG) item { DeveloperToolsCard(onAddTestPeers) }
     }
 
     if (showExportWarning) {
@@ -55,6 +56,20 @@ internal fun SettingsScreen(identity: LocalIdentity, onExportChats: () -> Unit, 
             confirmButton = { TextButton(onClick = { showClearMessagesWarning = false; onClearAllMessages() }) { Text("Clear", color = DANGER) } },
             dismissButton = { TextButton(onClick = { showClearMessagesWarning = false }) { Text("Cancel", color = MUTED) } }
         )
+    }
+}
+
+@Composable
+private fun DeveloperToolsCard(onAddTestPeers: () -> Unit) {
+    FieldPanel(Modifier.fillMaxWidth()) {
+        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            SectionLabel("Developer tools")
+            Text("Test peers", color = TEXT, fontWeight = FontWeight.Black)
+            Text("Adds sample chats, one request, and hidden peers for UI testing. Real users will not be added automatically.", color = MUTED)
+            OutlinedButton(onClick = onAddTestPeers, shape = RoundedCornerShape(8.dp)) {
+                Text("Add test peers", color = CYAN)
+            }
+        }
     }
 }
 
